@@ -1,0 +1,125 @@
+---
+title: "Practical Machine Learning Coursework"
+author: "Garry Ferguson"
+date: "21 November 2015"
+output: html_document
+---
+
+# Practical Machine Leaning Coursework
+
+## Introduction
+
+For this assingment we have data from various sensors recorded while performing barbell lifts, along with a variable indicating the quality of the exercise. The task is to build a machine learning algorithm to predict the quality of exercise from a testing dataset.
+
+The first step is to import the caret library which will be used for developing the machine learning algorithm:
+
+```{r}
+library(caret)
+```
+
+
+## Deciding which variables to use as predictors
+
+```{r}
+data <- read.csv("pml-training.csv")
+ncol(data)
+nrow(data)
+```
+
+The data is made up of 19622 rows and 160 columns/variables. The variable containing the prediction outcome is "classe", column number 160, leaving 159 variables that could be used as predictors. I attempted to reduce this number by selecting variables that seemed more likely to give a good model.
+
+To start with I created a logical vector of variables to use, initially setting each one to TRUE.
+
+```{r}
+columnsToUse = rep(TRUE, 159)
+```
+
+```{r}
+head(names(data))
+```
+
+The names of the first five variables indicate that they are not related to the manner in which excercise was performed. The variables are a numeric row ID, the username and three timestamps. Although it is possible that there could be a correlation between these variables and the quality of exercise, I decided that the model would be more useful if they were not included (more useful as the model would not be tied to specific people at specific times): 
+
+```{r}
+#Remove first five columns (row number, user_name and timestamps)
+columnsToUse[1:5] <- FALSE
+```
+
+Calling summary() on data revealed that many of the variables consist mainly of missing values which could make them not very useful for prediction purposes. I decided to remove any variable that was at least 90% missing values ("NA"):
+
+```{r}
+#Remove columns that are mostly NA
+mostlyNA <- function(vec, theshold = 0.9) {
+  length <- length(vec)
+  numberOfNA <- sum(is.na(vec))
+  return (numberOfNA/length) > threshold
+}
+
+for(i in 1:159) {
+  if(mostlyNA(data[,i]))
+    columnsToUse[i] = FALSE;
+}
+```
+
+Calling nearZeroVar(data) showed that some of the variables have very little variance, again making them less useful as predictors. So I removed these too:
+
+```{r}
+#Remove columns  with near zero variance
+for(i in nearZeroVar(data)) {columnsToUse[i] = FALSE}
+```
+
+I then constructed a "formua" object using the variables left in columnsToUse, i.e. the variables that will be included in the model.
+
+```{r}
+columnNamesToUse = names(data)[columnsToUse]
+formula = reformulate(columnNamesToUse, "classe")
+print(formula)
+```
+
+## Choosing a machine learning method
+
+Initially I selected the "random forest" method as a good general purpose method. As it turned out, this method gave a good enough accuracy do I did not need to try any other method.
+
+## Testing the model with cross validation
+
+In order to estimate the out of sample error rate I used cross validation by partitioning the training dataset into 60% training data and 40% testing data. The 60% training data was used to train a model and the 40% testing data was used to assess the accuracy of the model. This was done five times and the accuracy scores were recorded. The mean accuracy was then subtracted from one to give the estimated out of sample error rate:
+
+```{r}
+#Set a random seed for reprodicibilty
+set.seed(5678)
+
+partitions = createDataPartition(data$classe, times=5, p=0.6)
+accuracies = NULL
+for(in_training in partitions) {
+  training = data[in_training,]
+  testing = data[-in_training,]
+
+  cv_model <- train(formula, data=training, method="rf",ntree=100)
+
+  predicted <- predict(cv_model, testing)
+  cm <- confusionMatrix(predicted, testing$classe)
+  print(cm)
+  
+  accuracies = c(accuracies, cm$overall["Accuracy"])
+}
+
+print(accuracies)
+print(paste("Estimated error rate: ", 1.0 - mean(accuracies)))
+```
+
+The error rate is very low so the model should be sufficent for making the final predictions on "pml-traning.csv". (Had this not been the case I would have tried different variable selections and machine learning methods.)
+
+## Making predictions for "pml-training.csv"
+
+For making the final predictions I first trained the model on the entire traning dataset. The predictions are then:
+
+```{r}
+final_model <- train(formula, data=training, method="rf",ntree=100)
+
+assignment_test_data <- read.csv('pml-testing.csv')
+predicted <- predict(final_model, assignment_test_data)
+print(data.frame(problem_id=assignment_test_data$problem_id, predicted_classe=predicted))
+```
+
+
+
