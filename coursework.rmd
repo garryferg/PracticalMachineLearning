@@ -68,7 +68,7 @@ Calling nearZeroVar(data) showed that some of the variables have very little var
 for(i in nearZeroVar(data)) {columnsToUse[i] = FALSE}
 ```
 
-I then constructed a "formua" object using the variables left in columnsToUse, i.e. the variables that will be included in the model.
+I then constructed a "formula" object using the variables left in columnsToUse, i.e. the variables that will be included in the model.
 
 ```{r}
 columnNamesToUse = names(data)[columnsToUse]
@@ -78,7 +78,7 @@ print(formula)
 
 ## Choosing a machine learning method
 
-Initially I selected the "random forest" method as a good general purpose method. As it turned out, this method gave a good enough accuracy do I did not need to try any other method.
+Initially I selected the "random forest" method as a good general purpose method. As it turned out, this method gave a good enough accuracy so I did not need to try any other method.
 
 ## Testing the model with cross validation
 

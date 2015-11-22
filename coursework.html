@@ -109,7 +109,7 @@ for(i in 1:159) {
 <p>Calling nearZeroVar(data) showed that some of the variables have very little variance, again making them less useful as predictors. So I removed these too:</p>
 <pre class="r"><code>#Remove columns  with near zero variance
 for(i in nearZeroVar(data)) {columnsToUse[i] = FALSE}</code></pre>
-<p>I then constructed a “formua” object using the variables left in columnsToUse, i.e. the variables that will be included in the model.</p>
+<p>I then constructed a “formula” object using the variables left in columnsToUse, i.e. the variables that will be included in the model.</p>
 <pre class="r"><code>columnNamesToUse = names(data)[columnsToUse]
 formula = reformulate(columnNamesToUse, &quot;classe&quot;)
 print(formula)</code></pre>
@@ -130,7 +130,7 @@ print(formula)</code></pre>
 </div>
 <div id="choosing-a-machine-learning-method" class="section level2">
 <h2>Choosing a machine learning method</h2>
-<p>Initially I selected the “random forest” method as a good general purpose method. As it turned out, this method gave a good enough accuracy do I did not need to try any other method.</p>
+<p>Initially I selected the “random forest” method as a good general purpose method. As it turned out, this method gave a good enough accuracy so I did not need to try any other method.</p>
 </div>
 <div id="testing-the-model-with-cross-validation" class="section level2">
 <h2>Testing the model with cross validation</h2>
